@@ -7,7 +7,7 @@
 ```bash
 # 1. Настроить .env
 cp .env.example .env
-# Заполнить PREMARKET_API_KEY, ETH_WALLET, ETH_SECRET
+# Заполнить ETH_WALLET, ETH_SECRET
 
 # 2. Собрать
 go build -o arbitrage-bot .

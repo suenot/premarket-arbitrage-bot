@@ -8,7 +8,6 @@ import (
 )
 
 type Config struct {
-	PremarketAPIKey string
 	EthWallet       string
 	EthSecret       string // 12-word mnemonic
 	DryRun          bool
@@ -23,7 +22,6 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		PremarketAPIKey: os.Getenv("PREMARKET_API_KEY"),
 		EthWallet:       os.Getenv("ETH_WALLET"),
 		EthSecret:       os.Getenv("ETH_SECRET"),
 		DryRun:          true,

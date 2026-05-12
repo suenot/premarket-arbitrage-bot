@@ -23,45 +23,36 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	if cfg.PremarketAPIKey == "" {
-		log.Fatal("PREMARKET_API_KEY is required in .env")
+	if cfg.EthSecret == "" {
+		log.Fatal("ETH_SECRET is required in .env (12-word mnemonic from MetaMask)")
 	}
 
-	// Initialize Premarket client with existing JWT
-	pmClient := premarket.NewClient(cfg.PremarketAPIKey)
+	// Derive wallet from seed phrase
+	log.Println("🔑 Deriving wallet from mnemonic...")
+	privKey, addr, err := wallet.DeriveKey(cfg.EthSecret)
+	if err != nil {
+		log.Fatalf("Wallet derivation failed: %v", err)
+	}
 
-	// Derive wallet
-	var exec *executor.PolymarketExecutor
-	var walletAddr string
-
-	if cfg.EthSecret != "" {
-		log.Println("🔑 Deriving wallet from mnemonic...")
-		privKey, addr, err := wallet.DeriveKey(cfg.EthSecret)
-		if err != nil {
-			log.Fatalf("Wallet derivation failed: %v", err)
+	if cfg.EthWallet != "" {
+		if err := wallet.Verify(cfg.EthSecret, cfg.EthWallet); err != nil {
+			log.Fatalf("Wallet verification failed: %v", err)
 		}
-
-		if cfg.EthWallet != "" {
-			if err := wallet.Verify(cfg.EthSecret, cfg.EthWallet); err != nil {
-				log.Fatalf("Wallet verification failed: %v", err)
-			}
-			log.Printf("✅ Wallet verified: %s", addr.Hex())
-		} else {
-			log.Printf("📍 Derived wallet: %s", addr.Hex())
-		}
-
-		walletAddr = addr.Hex()
-
-		// Try to authenticate via wallet signature for auto-refresh
-		log.Println("🔐 Attempting Premarket wallet auth...")
-		if authErr := pmClient.SignInWithWallet(privKey, 137); authErr != nil {
-			log.Printf("⚠️  Wallet auth failed: %v (using existing API key)", authErr)
-		}
-
-		exec = executor.New(privKey, addr.Hex(), cfg.DryRun, cfg.MaxTradeUSD)
+		log.Printf("✅ Wallet verified: %s", addr.Hex())
 	} else {
-		log.Println("⚠️  No ETH_SECRET — running in monitor-only mode")
+		log.Printf("📍 Derived wallet: %s", addr.Hex())
 	}
+
+	walletAddr := addr.Hex()
+
+	// Authenticate via wallet signature
+	pmClient := premarket.NewClient("")
+	log.Println("🔐 Authenticating with Premarket...")
+	if err := pmClient.SignInWithWallet(privKey, 137); err != nil {
+		log.Fatalf("Premarket auth failed: %v", err)
+	}
+
+	exec := executor.New(privKey, addr.Hex(), cfg.DryRun, cfg.MaxTradeUSD)
 
 	// Init scanner using shared Premarket client
 	s := scanner.New(pmClient)

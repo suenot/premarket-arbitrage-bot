@@ -17,7 +17,7 @@ Premarket.me агрегирует данные с 6 платформ prediction 
 
 ```bash
 curl -sS "https://api.premarket.me/api/v2/platforms" \
-  -H "Authorization: Bearer $PREMARKET_API_KEY"
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json

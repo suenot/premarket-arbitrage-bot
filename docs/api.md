@@ -92,14 +92,6 @@ Response:
 {"api_key": "pk_..."}
 ```
 
-### Способ 2: Ручной JWT
-
-Если wallet auth не работает, можно вручную скопировать JWT из UI premarket.me:
-
-```
-Authorization: Bearer <PREMARKET_API_KEY>
-```
-
 JWT содержит: `type: ACCESS`, `iss: premarket`, `sub: <uuid>`, `exp: <timestamp>`
 
 ---

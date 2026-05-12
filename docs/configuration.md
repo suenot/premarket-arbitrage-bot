@@ -5,10 +5,7 @@
 ## Шаблон
 
 ```env
-# === Обязательные ===
-PREMARKET_API_KEY=your_jwt_token_here   # Fallback, если wallet auth не работает
-
-# === Кошелёк (для auto-auth и торговли) ===
+# === Кошелёк (обязательно) ===
 ETH_WALLET=0xYourWalletAddress
 ETH_SECRET="twelve word mnemonic seed phrase from metamask wallet here"
 
@@ -27,13 +24,10 @@ MAX_TRADE_USD=50
 
 | Параметр | Тип | Описание |
 |----------|-----|----------|
-| `PREMARKET_API_KEY` | string | JWT-токен (fallback если wallet auth не работает) |
 | `ETH_WALLET` | string | Адрес Ethereum-кошелька (0x...) для верификации |
-| `ETH_SECRET` | string | 12-словная BIP-39 мнемоника из MetaMask |
+| `ETH_SECRET` | string | **Обязательно.** 12-словная BIP-39 мнемоника из MetaMask |
 
-**Приоритет авторизации:**
-1. Wallet sign-in (`ETH_SECRET` → private key → подпись → fresh token)
-2. Fallback на `PREMARKET_API_KEY` (если wallet auth не удался)
+**Авторизация**: бот автоматически подписывает сообщение приватным ключом → получает fresh token от Premarket API.
 
 ### Настройки бота
 
