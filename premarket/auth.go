@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -26,9 +27,10 @@ type APIKeyResponse struct {
 // SignInWithWallet authenticates using an Ethereum wallet signature.
 func (c *Client) SignInWithWallet(privateKey *ecdsa.PrivateKey, chainID int) error {
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)
+	addrLower := strings.ToLower(address.Hex())
 
-	// Sign the auth message (EIP-191 personal_sign)
-	message := fmt.Sprintf("Sign in to Premarket with address %s", address.Hex())
+	// Exact message format from Premarket.me frontend
+	message := "Welcome to Premarket!\n\nClick to sign in. This request will not trigger a blockchain transaction or cost any gas fees.\n\nWallet: " + addrLower
 	hash := signPersonalMessage([]byte(message))
 	sig, err := crypto.Sign(hash, privateKey)
 	if err != nil {
