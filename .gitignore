@@ -19,6 +19,9 @@ node_modules/
 # Binary
 arbitrage-bot
 
+# Downloaded docs
+temp/
+
 # OS
 .DS_Store
 Thumbs.db
