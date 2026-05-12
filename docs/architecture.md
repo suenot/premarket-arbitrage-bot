@@ -34,7 +34,7 @@ w_premarket_arbitrage/
 │   └── polymarket.go         # Polymarket CLOB: ордера (dry-run / live)
 │
 ├── docs/                     # Документация
-└── temp/                     # Скачанная документация API (не коммитится)
+└── premarket-docs/           # Скачанная документация Premarket API
 ```
 
 ## Поток данных

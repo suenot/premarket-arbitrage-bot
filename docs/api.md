@@ -2,7 +2,7 @@
 
 Полная документация: [docs.premarket.me](https://docs.premarket.me/)
 
-Скачанная копия всех страниц: `./temp/` (не коммитится)
+Скачанная копия всех страниц: `./premarket-docs/`
 
 ## Base URL
 

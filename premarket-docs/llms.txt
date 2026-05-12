@@ -1,0 +1,36 @@
+Source: https://docs.premarket.me/llms.txt
+
+---
+
+# Premarket Docs
+
+## Docs
+
+- [Get arbitrage opportunities](https://docs.premarket.me/api-reference/arbitrage/get-arbitrage-opportunities.md): Returns current arbitrage opportunities between platforms.
+- [Create API key](https://docs.premarket.me/api-reference/auth/create-api-key.md): Creates a new API key for your account.
+- [Refresh session](https://docs.premarket.me/api-reference/auth/refresh-session.md): Issues a new access token for an already signed-in user.
+- [Sign in with wallet](https://docs.premarket.me/api-reference/auth/sign-in-with-wallet.md): Signs in a user with a wallet signature and starts an authenticated session.
+- [Get market token balances](https://docs.premarket.me/api-reference/balances/get-market-token-balances.md): Returns non-zero balances for market tokens held by the provided wallets.
+- [Get wallet cash balances](https://docs.premarket.me/api-reference/balances/get-wallet-cash-balances.md): Returns stablecoin balances for one or more wallet addresses.
+- [Get event details](https://docs.premarket.me/api-reference/events/get-event-details.md): Returns full details for one event by `event_slug`.
+- [List market events](https://docs.premarket.me/api-reference/events/list-market-events.md): Returns the main list of market events with pagination and optional filters by platform and category. You can also change the order of results with the `sort` parameter.
+- [Plan best order split](https://docs.premarket.me/api-reference/liquidity/plan-best-order-split.md): Calculates how to split one buy or sell order across platforms to get a better execution.
+- [Get market by id](https://docs.premarket.me/api-reference/market/get-market-by-id.md): Returns one market with its outcomes and event context for the selected platform.
+- [Get outcome orderbook](https://docs.premarket.me/api-reference/orderbook/get-outcome-orderbook.md): Returns price levels for one outcome across available platforms, plus a combined book.
+- [Get portfolio positions](https://docs.premarket.me/api-reference/positions/get-portfolio-positions.md): Returns open positions for one or more wallets in a single portfolio view.
+- [Check regional availability](https://docs.premarket.me/api-reference/restricts/check-regional-availability.md): Returns whether trading is available for the current user region.
+- [Get my profile](https://docs.premarket.me/api-reference/user/get-my-profile.md): Returns profile data for the signed-in user.
+- [Get market by id](https://docs.premarket.me/api-reference/v2market/get-market-by-id.md): Returns one market with its outcomes and event context for the selected platform.
+- [List platforms](https://docs.premarket.me/api-reference/v2platforms/list-platforms.md)
+- [Getting Started](https://docs.premarket.me/getting-started.md): How to work with Premarket API
+- [Premarket Docs](https://docs.premarket.me/index.md): Premarket platform documentation and API reference
+
+## OpenAPI Specs
+
+- [openapi](https://docs.premarket.me/api-reference/openapi.json)
+
+## Optional
+
+- [X (Twitter)](https://x.com/pre_markets)
+
+
