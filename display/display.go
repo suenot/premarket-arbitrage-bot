@@ -16,7 +16,7 @@ var (
 			Background(lipgloss.Color("#7B2FBE")).
 			Padding(0, 1)
 
-	greenStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF87"))
+	greenStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF87"))
 	yellowStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFDA6B"))
 	redStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF6B6B"))
 	dimStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#666666"))
@@ -27,6 +27,9 @@ var (
 	statusStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#8BE9FD")).
 			Italic(true)
+	balanceStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#50FA7B")).
+			Bold(true)
 )
 
 func colorAPR(apr float64) string {
@@ -72,15 +75,34 @@ func truncate(s string, maxLen int) string {
 	return s[:maxLen-1] + "…"
 }
 
+// PortfolioInfo holds optional portfolio data to display.
+type PortfolioInfo struct {
+	TotalBalance    float64
+	PolygonBalance  float64
+	ActivePositions int
+	TotalValue      float64
+}
+
 // Render prints the arbitrage opportunities as a styled CLI table.
-func Render(pairs []scanner.ArbitragePair, total int, dryRun bool) {
+func Render(pairs []scanner.ArbitragePair, total int, dryRun bool, portfolio *PortfolioInfo) {
 	mode := greenStyle.Render("🟢 DRY RUN")
 	if !dryRun {
 		mode = redStyle.Render("🔴 LIVE TRADING")
 	}
 
 	fmt.Println(titleStyle.Render("⚡ Premarket Arbitrage Scanner"))
-	fmt.Println(statusStyle.Render(fmt.Sprintf("   %s  |  Found: %d matched / %d total", mode, len(pairs), total)))
+
+	// Status line
+	statusParts := []string{mode, fmt.Sprintf("Found: %d matched / %d total", len(pairs), total)}
+
+	// Portfolio info
+	if portfolio != nil {
+		balanceStr := balanceStyle.Render(fmt.Sprintf("💰 $%.2f USDC", portfolio.TotalBalance))
+		posStr := fmt.Sprintf("📊 %d positions ($%.2f)", portfolio.ActivePositions, portfolio.TotalValue)
+		statusParts = append(statusParts, balanceStr, posStr)
+	}
+
+	fmt.Println(statusStyle.Render("   " + strings.Join(statusParts, "  |  ")))
 	fmt.Println()
 
 	if len(pairs) == 0 {
@@ -93,7 +115,7 @@ func Render(pairs []scanner.ArbitragePair, total int, dryRun bool) {
 
 	var rows [][]string
 	for i, p := range pairs {
-		if i >= 25 { // limit display
+		if i >= 25 {
 			break
 		}
 		rows = append(rows, []string{
@@ -124,7 +146,7 @@ func Render(pairs []scanner.ArbitragePair, total int, dryRun bool) {
 	fmt.Println(t)
 	fmt.Println()
 
-	// Show platform legend
+	// Platform legend
 	platforms := make(map[string]bool)
 	for _, p := range pairs {
 		platforms[p.Platform1.Source] = true

@@ -11,6 +11,7 @@ import (
 	"github.com/suenot/w_premarket_arbitrage/config"
 	"github.com/suenot/w_premarket_arbitrage/display"
 	"github.com/suenot/w_premarket_arbitrage/executor"
+	"github.com/suenot/w_premarket_arbitrage/premarket"
 	"github.com/suenot/w_premarket_arbitrage/scanner"
 	"github.com/suenot/w_premarket_arbitrage/wallet"
 )
@@ -26,8 +27,13 @@ func main() {
 		log.Fatal("PREMARKET_API_KEY is required in .env")
 	}
 
+	// Initialize Premarket client with existing JWT
+	pmClient := premarket.NewClient(cfg.PremarketAPIKey)
+
 	// Derive wallet
 	var exec *executor.PolymarketExecutor
+	var walletAddr string
+
 	if cfg.EthSecret != "" {
 		log.Println("🔑 Deriving wallet from mnemonic...")
 		privKey, addr, err := wallet.DeriveKey(cfg.EthSecret)
@@ -44,13 +50,21 @@ func main() {
 			log.Printf("📍 Derived wallet: %s", addr.Hex())
 		}
 
+		walletAddr = addr.Hex()
+
+		// Try to authenticate via wallet signature for auto-refresh
+		log.Println("🔐 Attempting Premarket wallet auth...")
+		if authErr := pmClient.SignInWithWallet(privKey, 137); authErr != nil {
+			log.Printf("⚠️  Wallet auth failed: %v (using existing API key)", authErr)
+		}
+
 		exec = executor.New(privKey, addr.Hex(), cfg.DryRun, cfg.MaxTradeUSD)
 	} else {
 		log.Println("⚠️  No ETH_SECRET — running in monitor-only mode")
 	}
 
-	// Init scanner
-	s := scanner.New(cfg.PremarketAPIKey)
+	// Init scanner using shared Premarket client
+	s := scanner.New(pmClient)
 
 	filterOpts := scanner.FilterOptions{
 		MinProfitPct: cfg.MinProfitPct,
@@ -80,12 +94,12 @@ func main() {
 	defer ticker.Stop()
 
 	// Run immediately on start
-	poll(s, filterOpts, cfg.DryRun, exec)
+	poll(s, pmClient, filterOpts, cfg.DryRun, exec, walletAddr, cfg.PollInterval)
 
 	for {
 		select {
 		case <-ticker.C:
-			poll(s, filterOpts, cfg.DryRun, exec)
+			poll(s, pmClient, filterOpts, cfg.DryRun, exec, walletAddr, cfg.PollInterval)
 		case <-stop:
 			fmt.Println()
 			log.Println("👋 Shutting down gracefully...")
@@ -94,7 +108,7 @@ func main() {
 	}
 }
 
-func poll(s *scanner.Scanner, opts scanner.FilterOptions, dryRun bool, exec *executor.PolymarketExecutor) {
+func poll(s *scanner.Scanner, pmClient *premarket.Client, opts scanner.FilterOptions, dryRun bool, exec *executor.PolymarketExecutor, walletAddr string, pollInterval int) {
 	log.Println("📡 Fetching arbitrage opportunities...")
 
 	resp, err := s.Fetch()
@@ -105,10 +119,16 @@ func poll(s *scanner.Scanner, opts scanner.FilterOptions, dryRun bool, exec *exe
 
 	filtered := scanner.Filter(resp.Pairs, opts)
 
+	// Fetch portfolio info via Premarket API
+	var portfolio *display.PortfolioInfo
+	if walletAddr != "" {
+		portfolio = fetchPortfolio(pmClient, walletAddr)
+	}
+
 	// Clear screen for fresh display
 	fmt.Print("\033[2J\033[H")
 
-	display.Render(filtered, resp.Total, dryRun)
+	display.Render(filtered, resp.Total, dryRun, portfolio)
 
 	if exec != nil && !dryRun {
 		for _, pair := range filtered {
@@ -119,7 +139,6 @@ func poll(s *scanner.Scanner, opts scanner.FilterOptions, dryRun bool, exec *exe
 			}
 		}
 	} else if exec != nil && dryRun {
-		// In dry-run, log what would happen for Polymarket-executable pairs
 		polyCount := 0
 		for _, pair := range filtered {
 			if exec.CanExecute(pair) {
@@ -131,5 +150,29 @@ func poll(s *scanner.Scanner, opts scanner.FilterOptions, dryRun bool, exec *exe
 		}
 	}
 
-	log.Printf("⏳ Next poll in %ds...", 30)
+	log.Printf("⏳ Next poll in %ds...", pollInterval)
+}
+
+func fetchPortfolio(pmClient *premarket.Client, walletAddr string) *display.PortfolioInfo {
+	info := &display.PortfolioInfo{}
+
+	// Fetch cash balances
+	balances, err := pmClient.GetCashBalances([]string{walletAddr})
+	if err != nil {
+		log.Printf("⚠️  Balance fetch: %v", err)
+	} else {
+		info.TotalBalance = balances.Balances.Total
+		info.PolygonBalance = balances.Balances.Polygon.Balance
+	}
+
+	// Fetch positions
+	positions, err := pmClient.GetPositions([]string{walletAddr})
+	if err != nil {
+		log.Printf("⚠️  Positions fetch: %v", err)
+	} else {
+		info.ActivePositions = positions.Summary.ActivePositions
+		info.TotalValue = positions.Summary.TotalValue
+	}
+
+	return info
 }

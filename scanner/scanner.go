@@ -3,13 +3,10 @@ package scanner
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"sort"
-	"time"
-)
 
-const baseURL = "https://api.premarket.me"
+	"github.com/suenot/w_premarket_arbitrage/premarket"
+)
 
 // PlatformData represents one side of an arbitrage pair.
 type PlatformData struct {
@@ -69,43 +66,24 @@ type Response struct {
 
 // Scanner polls the Premarket API for arbitrage opportunities.
 type Scanner struct {
-	apiKey     string
-	httpClient *http.Client
+	client *premarket.Client
 }
 
-// New creates a new Scanner.
-func New(apiKey string) *Scanner {
-	return &Scanner{
-		apiKey: apiKey,
-		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
-	}
+// New creates a new Scanner using the Premarket client.
+func New(client *premarket.Client) *Scanner {
+	return &Scanner{client: client}
 }
 
 // Fetch retrieves all arbitrage pairs from the API.
 func (s *Scanner) Fetch() (*Response, error) {
-	req, err := http.NewRequest("GET", baseURL+"/api/arbitrage", nil)
+	body, err := s.client.Get("/api/arbitrage")
 	if err != nil {
-		return nil, fmt.Errorf("request creation failed: %w", err)
-	}
-
-	req.Header.Set("Authorization", "Bearer "+s.apiKey)
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API returned %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("fetch arbitrage: %w", err)
 	}
 
 	var result Response
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("JSON decode failed: %w", err)
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("parse arbitrage: %w", err)
 	}
 
 	return &result, nil
